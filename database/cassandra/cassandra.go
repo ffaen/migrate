@@ -197,7 +197,7 @@ func (c *Cassandra) Unlock() error {
 func (c *Cassandra) Run(migration io.Reader) error {
 	if c.config.MultiStatementEnabled {
 		var err error
-		if e := multistmt.Parse(migration, multiStmtDelimiter, c.config.MultiStatementMaxSize, func(m []byte) bool {
+		if e := multistmt.Parse(migration, multiStmtDelimiter, c.config.MultiStatementMaxSize, true, func(m []byte) bool {
 			tq := strings.TrimSpace(string(m))
 			if tq == "" {
 				return true

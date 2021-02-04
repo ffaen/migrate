@@ -8,7 +8,7 @@ import (
 )
 
 // StartBufSize is the default starting size of the buffer used to scan and parse multi-statement migrations
-var StartBufSize = 4096
+var StartBufSize = (1024 * 8)
 
 // Handler handles a single migration parsed from a multi-statement migration.
 // It's given the single migration to handle and returns whether or not further statements
@@ -31,11 +31,33 @@ func splitWithDelimiter(delimiter []byte) func(d []byte, atEOF bool) (int, []byt
 	}
 }
 
+func splitWithoutDelimiter(delimiter []byte) func(d []byte, atEOF bool) (int, []byte, error) {
+	return func(d []byte, atEOF bool) (int, []byte, error) {
+		// SplitFunc inspired by bufio.ScanLines() implementation
+		if atEOF {
+			if len(d) == 0 {
+				return 0, nil, nil
+			}
+			return len(d), d, nil
+		}
+		if i := bytes.Index(d, delimiter); i >= 0 {
+			return i + len(delimiter), d[:i], nil
+		}
+		return 0, nil, nil
+	}
+}
+
 // Parse parses the given multi-statement migration
-func Parse(reader io.Reader, delimiter []byte, maxMigrationSize int, h Handler) error {
+func Parse(reader io.Reader, delimiter []byte, maxMigrationSize int, includeDelimiter bool, h Handler) error {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 0, StartBufSize), maxMigrationSize)
-	scanner.Split(splitWithDelimiter(delimiter))
+
+	if includeDelimiter {
+		scanner.Split(splitWithDelimiter(delimiter))
+	} else {
+		scanner.Split(splitWithoutDelimiter(delimiter))
+	}
+
 	for scanner.Scan() {
 		cont := h(scanner.Bytes())
 		if !cont {

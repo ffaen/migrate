@@ -149,7 +149,7 @@ func (n *Neo4j) Run(migration io.Reader) (err error) {
 	if n.config.MultiStatement {
 		_, err = session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 			var stmtRunErr error
-			if err := multistmt.Parse(migration, StatementSeparator, n.config.MultiStatementMaxSize, func(stmt []byte) bool {
+			if err := multistmt.Parse(migration, StatementSeparator, n.config.MultiStatementMaxSize, true, func(stmt []byte) bool {
 				trimStmt := bytes.TrimSpace(stmt)
 				if len(trimStmt) == 0 {
 					return true

@@ -131,7 +131,7 @@ func (ch *ClickHouse) init() error {
 func (ch *ClickHouse) Run(r io.Reader) error {
 	if ch.config.MultiStatementEnabled {
 		var err error
-		if e := multistmt.Parse(r, multiStmtDelimiter, ch.config.MultiStatementMaxSize, func(m []byte) bool {
+		if e := multistmt.Parse(r, multiStmtDelimiter, ch.config.MultiStatementMaxSize, true, func(m []byte) bool {
 			tq := strings.TrimSpace(string(m))
 			if tq == "" {
 				return true
